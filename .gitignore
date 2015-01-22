@@ -52,3 +52,16 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# others
+*.bak
+*.swp
+*.aux
+*.pyc
+*.ent
+*.log
+*.bbl
+*.synctex.gz
+*.blg
+*.rel
+.DS_Store
