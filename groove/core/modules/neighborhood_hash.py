@@ -4,7 +4,7 @@
 
 
 import numpy as np
-
+from scipy.sparse import csr_matrix
 
 MAX_NODE_SIZE = 0
 
@@ -12,13 +12,12 @@ def embed(g):
     """ Embed a graph in a vector space using the neighborhood hash,
     where dimension represent the counts of an individual hash.
     :param g: a networkx graph object
-    :return: a numpy array x
+    :return: sparse embedded vector csr_matrix
     """
     n = g.number_of_nodes()
     if n < MAX_NODE_SIZE or MAX_NODE_SIZE == 0:
         if n > 0:
-            x = compute_label_histogram(g)
-            x = np.array(x, dtype=np.int16)
+            x = csr_matrix(compute_label_histogram(g))
     else:
         raise("Number of nodes in graph exceeded!")
     return x
