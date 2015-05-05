@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # groove - a graph tool for vector embeddings
 # Hugo Gascon <hgascon@mail.de>
 
