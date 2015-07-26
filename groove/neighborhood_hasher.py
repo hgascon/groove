@@ -9,7 +9,7 @@ from simhash import Simhash
 import numpy as np
 
 
-class NeigborhoodHasher():
+class NeighborhoodHasher():
     """
     :param property: node property to compute hash
     :param f: bit length of the simhash
@@ -35,9 +35,9 @@ class NeigborhoodHasher():
         n = g.number_of_nodes()
         if n < self.max_node_size or self.max_node_size == 0:
             if n > 0:
-                if hash_type == "simhash"
+                if self.hash_type == "simhash":
                     x = self._simhash_histogram(g)
-                elif hash_type == "lineargk"
+                elif self.hash_type == "lineargk":
                     x = self._lineargk_histogram(g)
         else:
             raise("Number of nodes in graph exceeded!")
@@ -63,7 +63,7 @@ class NeigborhoodHasher():
             gc.node[node][label] = nh
         hashes = [g.node[name][label] for name in gc.nodes()]
 
-        return _vectorize(hashes, f=len(hashes[0]))
+        return self._vectorize(hashes, f=len(hashes[0]))
 
     def _simhash_histogram(self, g):
 
@@ -75,8 +75,9 @@ class NeigborhoodHasher():
         """
         hashes = []
         f = self.hash_function_bit_length
+        #TODO consider the case of nodes without neighbors
         for node in iter(g.nodes()):
-            neighbors_features = [g.node[n][self.label_property] for n
+            neighbors_features = [g.node[n][self.hashing_property] for n
                                   in g.neighbors_iter(node)]
             features = []
             for nf in neighbors_features:
@@ -86,7 +87,7 @@ class NeigborhoodHasher():
             if neighbors_features:
                 hashes += [Simhash(features,
                                    f=f).value]
-        return _vectorize(hashes, f)
+        return self._vectorize(hashes, f)
     
     def _vectorize(self, hashes, f):
         c = Counter(hashes)
@@ -94,6 +95,7 @@ class NeigborhoodHasher():
         j = np.array(c.keys(), dtype=np.int64)
         i = np.zeros(len(j))
         x = coo_matrix((data, (i, j)), shape=(1, 2**(f+1)-1))
+        return x
 
 
 
