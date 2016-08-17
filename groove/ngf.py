@@ -89,27 +89,29 @@ class NGFGenerator(object):
 
 class NGF:
 
-    def __init__(self):
+    def __init__(self, batch_size=0, n_fingerprint=64):
         # default neighborhood of depth 2 (root + neighs)
         self.G = []
         self.I0 = []
         self.I1 = []
-        self.F = []
+        self.batch_size = batch_size
+        self.n_fingerprint = n_fingerprint
+        self.F = np.array([]).reshape((0, n_fingerprint))
+        self.files = []
 
     def load_data(self, data_path, n_depth=2, node_label='label'):
 
-        files = []
         print "[+] Reading dot files"
         for f in os.listdir(data_path):
             if f.endswith('dot'):
-                files.append(os.path.abspath(os.path.join(data_path, f)))
+                self.files.append(os.path.abspath(os.path.join(data_path, f)))
 
         G, I = [], []
-        assert files
+        assert self.files
 
         print "[+] Computing tensor"
-        for i in tqdm(range(len(files))):
-            f = files[i]
+        for i in tqdm(range(len(self.files))):
+            f = self.files[i]
             graph = read_dot(f)
             G_g = []
             try:
@@ -152,6 +154,9 @@ class NGF:
 
         # we build the first index
         o = np.ones(max_rows, dtype=np.int)
+        # if no batch is defined, we use all files
+        if not self.batch_size:
+            self.batch_size = len(self.files)
         i0 = np.array([[i * o] for i in np.arange(self.batch_size)])
         i0 = theano.shared(np.array(i0, dtype=np.int32), name='i0')
 
@@ -176,30 +181,31 @@ class NGF:
         self.I0 = i0
         self.I1 = i1
 
-    def fit(self, data_path, batch_size=5, n_fingerprint=64):
+    def fit(self):
 
         graphs = self.G
         data_shape = graphs.get_value(borrow=True).shape
-        n_train_batches = data_shape[0] // batch_size
+        n_train_batches = data_shape[0] // self.batch_size
         data_size = data_shape[0]
         vect_size = data_shape[2]
         rng = np.random.RandomState(123)
 
         # TODO assert that all graphs have more nodes than n_hid
         ngf = NGFGenerator(rng=rng, data_size=data_size, vect_size=vect_size,
-                           n_fingerprint=n_fingerprint)
+                           n_fingerprint=self.n_fingerprint)
         start_time = timeit.default_timer()
         data = self.G, self.I0, self.I1
-        train_fn = ngf.build_training_function(data, batch_size)
+        train_fn = ngf.build_training_function(data, self.batch_size)
         end_time = timeit.default_timer()
         compile_time = (end_time - start_time)
         print >> sys.stderr, ('The function compiled in %.2fm' % (compile_time / 60.))
 
         print "> Starting embedding\n\n[batch size {} | " \
-              "{} batches]\n".format(batch_size, n_train_batches)
+              "{} batches]\n".format(self.batch_size, n_train_batches)
         start_time = timeit.default_timer()
         for batch_index in xrange(n_train_batches):
-            self.F.append(train_fn(batch_index))
+            self.F = np.vstack([self.F, train_fn(batch_index)[0]])
+
         end_time = timeit.default_timer()
         embedding_time = (end_time - start_time)
         print >> sys.stderr, ('The code ran for %.2fm' % (embedding_time / 60.))
