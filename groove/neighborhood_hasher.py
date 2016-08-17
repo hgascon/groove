@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# groove - a graph tool for vector embeddings
+# groove - a tool for graphs embeddings
 # Hugo Gascon <hgascon@mail.de>
 
 
@@ -88,7 +88,7 @@ class NeighborhoodHasher():
                 hashes += [Simhash(features,
                                    f=f).value]
         return self._vectorize(hashes, f)
-    
+
     def _vectorize(self, hashes, f):
         c = Counter(hashes)
         data = np.array(c.values())
@@ -96,7 +96,6 @@ class NeighborhoodHasher():
         i = np.zeros(len(j))
         x = coo_matrix((data, (i, j)), shape=(1, 2**(f+1)-1))
         return x
-
 
 
 def _ngrams(tokens, min_n=2, max_n=2):
