@@ -1,6 +1,7 @@
-progressbar
+tqdm
 networkx
 numpy
 scikit-learn
 scipy
 simhash
+theano
